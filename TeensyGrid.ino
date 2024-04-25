@@ -2,22 +2,29 @@
 #include <IntervalTimer.h>
 
 
-// Pin definitions - adjust to your wiring
-const int latchPin = 9; // Connect to ST_CP (RCLK) on 74HC595
+// Pin definitions
+const int latchPin = 9; // Connected to RCLK on SN74HC595
 
-
+// Display characteristics
 const int X_DIM = 4;
 const int Y_DIM = 6;
+
+// Data format constants
 const int BIT_SEPARATOR = 2;
 const int END_PADDING = 0;
 const int DATA_LEN = 3;
-byte colors[X_DIM][Y_DIM][3];
-byte write_data[X_DIM][DATA_LEN];
+
+// Data arrays
+byte colors[X_DIM][Y_DIM][3]; // Pixel colors in RGB format
+byte write_data[X_DIM][DATA_LEN]; // Processed data used for BAM
+
+// BAM tracking variables
 int bam_cycle = 0;
 int row_cycle = 0;
 const int cycle_delay = 400;
 int cycle_delay_count = 0;
 
+// Defining some standard colors
 int NUM_COLORS = 7;
 uint8_t color_values[][3] = { { 0xF, 0x0, 0x0 }, // Red
                               { 0xF, 0x3, 0x0 }, // Orange
@@ -33,7 +40,9 @@ uint8_t blue[] = { 0x0, 0x0, 0xF };
 uint8_t purple[] = { 0xF, 0x0, 0xF };
 IntervalTimer myTimer;
 
-// This is the function that will be called on each timer interrupt
+// Timer interrupt handler to multiplex and perform BAM
+// 1 of 4 rows is lit during each execution
+// Individual LEDs/colors are ON/OFF based on their BAM cycle
 void timerCallback() {
   if (bam_cycle == 0) {
       format_all(0);
@@ -52,12 +61,17 @@ void timerCallback() {
     row_cycle = (row_cycle+1) % 4;
 }
 
+// Function to set pixel value in data array given RGB values
+// Args: Pixel location (x,y) and 3-byte array of RGB color values
 void setColor(int x, int y, const byte* color) {
   colors[x][Y_DIM - 1 - y][0] = color[0];
   colors[x][Y_DIM - 1 - y][1] = color[1];
   colors[x][Y_DIM - 1 - y][2] = color[2];
 }
 
+// Retrieve one of the 3 color bytes for a given pixel
+// Args: Pixel location (x,y) and rgb = 0 for red, 1, for green, and 2 for blue
+// Returns: One byte of the specified color in the given location
 uint8_t getColor (int x, int y, int rgb) {
   return colors[x][Y_DIM - 1 - y][rgb];
 }
@@ -172,8 +186,7 @@ void format_data(int row, int BAM_cycle) {
   write_data[row][curr_byte] = working_byte;
 }
 
-// This can eb sped up really easily by working from the end to the beginning...
-// Maybe we'll get to that sometime soon
+// Foundation of the snake animation
 void shiftSnakePattern(const uint8_t newColor[3]) {
   // First row
   uint8_t temp_color[] = {0, 0, 0};
