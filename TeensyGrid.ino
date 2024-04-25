@@ -134,12 +134,17 @@ void updateShiftRegister(const byte* data) {
   SPI.endTransaction(); // End the SPI transaction
 }
 
+// Format data for all rows to be shifted onto shift registers
 void format_all(int BAM_bit) {
   for (int i = 0; i < X_DIM; i++) {
+    // Format each row
     format_data(i, BAM_bit);
   }
 }
 
+// Format one row of data for shifting onto shift registers, based on current bit of BAM
+// Args: Row to format and current bit in BAM cycle
+// Output: Formats one row of the raw data array
 void format_data(int row, int BAM_cycle) {
   int curr_bit = 0; // Last filled bit (left to right)
   int curr_byte = 0; // Byte we are filling
@@ -147,9 +152,10 @@ void format_data(int row, int BAM_cycle) {
   uint8_t working_byte = 0x00;
 
   for (int i = 0; i < Y_DIM; i++) {
-    uint8_t combinedBits = 0;
-    uint8_t mask = 1 << BAM_cycle;
+    uint8_t combinedBits = 0; // Stores the 3 color bits for a given pixel for the current BAM bit
+    uint8_t mask = 1 << BAM_cycle; // Used to decide if color is ON or OFF for this bit in cycle
 
+    // Calculate current color bits
     for (int color = 0; color < 3; color++) {  // For RGB
       if (colors[row][i][color] & mask) {      // Shift and check the bit
         combinedBits |= 1 << (2 - color);      // Set bit for RGB
@@ -181,8 +187,12 @@ void format_data(int row, int BAM_cycle) {
 
   // Add row selection bits to data frame
   working_byte = working_byte<<(X_DIM + BIT_SEPARATOR); // Scoot over to make room for separator and row bits
+
+  // Add row bit for multiplexing without modifying data bits
   uint8_t row_select = (~(0b1<<row) & (0xFF>>(8-X_DIM)));
   working_byte |= row_select;
+
+  // Save the last byte
   write_data[row][curr_byte] = working_byte;
 }
 
