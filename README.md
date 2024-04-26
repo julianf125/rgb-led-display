@@ -1,7 +1,10 @@
 # Programmable Full-Color RGB LED Display
 
 ## Description
+This repository holds the imnplementation of a custom controller to achieve individual addressability and 4-bit RGB color using a grid of basic 4-pin RGB diodes. This was achieved through the use of shift registers, MOSFETs, and the techniques of Multiplexing and Bit Angle Modulation.
 
 ## Multiplexing and Bit Angle Modulation
+In this context, multiplexing can be defined as lighting each row of the LED display individually with all other rows turned off, and cycling through the rows with enough speed to produce the effect that all rows are concurrently displaying the desired colors. Bit Angle Modulation is similar in approach to Pulse Width Modulation. In pulse width modulation, the LED brightness is controlled by direction modulating the fraction of time an LED stays on for each clock pulse, increasing the duty cycle to raise the brightness and descreasing the duty cycle to lower it. In Bit Angle Modulation, a given LED is either on or off for the entirety of a clock pulse; instead, the on-time fraction is modulated by choosing a number of cycles (16 in this case) and turning the LED on for the desired number of cycles to achieve the desired brightness. For example, to achieve a 25% brightness, the LED would be on for 4 cycles and then off for 16. Note that one cycle refers to each row of the display being lit and turned off once.
 
-## Usage
+## Usage and Design
+A Teensy 4.0 microcontroller, along with several SN74HC595 shift registers, were used in implementing the circuitry for this project. The SPI library was used to communicate with the shift registers at a frequency of 10 MHz. The outputs of the shift registers were used to control both P- and N-channel MOSFETs for current sourcing and sinking; as I used common-anode RGB LEDs, the anodes of the LEDs were connected to the outputs of P MOSFETs, while the cathodes were connected to the inputs of N-channel MOSFETs. The shift registers were connected to the gates of these transistors.
